@@ -1,234 +1,173 @@
-export default function Hero() {
-  return (
-    <section className="hero">
-      <div className="hero__content">
-        <div className="hero__badge">
-          <span className="hero__badge-dot"></span>
-          Dasturchilar uchun
-        </div>
-        <h1 className="hero__title">
-          Intervyu
-          <span className="hero__title-accent"> savollari</span>
-          <br />
-          va professional javoblar
-        </h1>
-        <p className="hero__desc">
-          JavaScript, React, CSS va Algoritmlar bo‘yicha 18+ savol. 
-          AI yordamida javoblaringizni tekshiring va bilimingizni oshiring.
-        </p>
-        <div className="hero__stats">
-          <div className="hero__stat">
-            <span className="hero__stat-num">4</span>
-            <span className="hero__stat-label">Texnologiya</span>
-          </div>
-          <div className="hero__stat-divider"></div>
-          <div className="hero__stat">
-            <span className="hero__stat-num">18+</span>
-            <span className="hero__stat-label">Savol</span>
-          </div>
-          <div className="hero__stat-divider"></div>
-          <div className="hero__stat">
-            <span className="hero__stat-num">3</span>
-            <span className="hero__stat-label">Daraja</span>
-          </div>
-        </div>
-        <a href="#technologies" className="hero__cta">
-          Boshlash
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </a>
-      </div>
-      <div className="hero__visual">
-        <div className="hero__code-block">
-          <div className="hero__code-header">
-            <span></span><span></span><span></span>
-          </div>
-          <pre className="hero__code">
-{`// DevTip - Interview Ready
+import { useState, useEffect } from 'react';
+
+const HERO_CODE = `// DevTip - Interview Ready
 const skills = ['JS', 'React', 'CSS'];
 const level = 'Professional';
 
 skills.forEach(skill => 
   prepare(skill, level)
-);`}
+);`;
+
+function Typewriter({ text, delay = 0, speed = 40, className = '', showCursor = true }) {
+  const [display, setDisplay] = useState('');
+  const [started, setStarted] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const startTimer = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(startTimer);
+  }, [delay]);
+
+  useEffect(() => {
+    if (!started || !text) return;
+    let i = 0;
+    const t = setInterval(() => {
+      if (i <= text.length) {
+        setDisplay(text.slice(0, i));
+        if (i === text.length) setDone(true);
+        i++;
+      } else {
+        clearInterval(t);
+      }
+    }, speed);
+    return () => clearInterval(t);
+  }, [started, text, speed]);
+
+  return (
+    <span className={className}>
+      {display}
+      {showCursor && !done && (
+        <span className="inline-block ml-0.5 font-light text-accent animate-[heroBlink_1s_ease-in-out_infinite]" aria-hidden>|</span>
+      )}
+    </span>
+  );
+}
+
+function getCodeCharDelay(char, nextChar) {
+  if (char === '\n') return 280 + Math.random() * 120;
+  if (char === ';') return 220 + Math.random() * 80;
+  if (char === '{' || char === '(') return 150 + Math.random() * 60;
+  if (char === ')' || char === '}') return 120 + Math.random() * 50;
+  if (char === ' ' || char === ',') return 60 + Math.random() * 40;
+  if (char === '=' || char === '>' || char === '<') return 100 + Math.random() * 40;
+  return 35 + Math.random() * 45;
+}
+
+const CODE_PAUSE_AFTER = 2200;
+const CODE_RESTART_DELAY = 800;
+
+function CodeTypewriter({ code, delay = 0 }) {
+  const [display, setDisplay] = useState('');
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (!code) return;
+    const startTimer = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(startTimer);
+  }, [code, delay]);
+
+  useEffect(() => {
+    if (!started || !code) return;
+    let i = 0;
+    let timeoutId = null;
+
+    function typeNext() {
+      if (i <= code.length) {
+        setDisplay(code.slice(0, i));
+        if (i === code.length) {
+          timeoutId = setTimeout(loopAgain, CODE_PAUSE_AFTER);
+          return;
+        }
+        const char = code[i];
+        const nextChar = code[i + 1];
+        const ms = getCodeCharDelay(char, nextChar);
+        i++;
+        timeoutId = setTimeout(typeNext, ms);
+      }
+    }
+
+    function loopAgain() {
+      setDisplay('');
+      i = 0;
+      timeoutId = setTimeout(typeNext, CODE_RESTART_DELAY);
+    }
+
+    typeNext();
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [started, code]);
+
+  return (
+    <>
+      {display}
+      <span className="inline-block ml-0.5 font-normal text-accent animate-[heroBlink_0.85s_ease-in-out_infinite]" aria-hidden>|</span>
+    </>
+  );
+}
+
+export default function Hero({ onBoshlashClick }) {
+  return (
+    <section className="max-w-[1200px] mx-auto px-8 py-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-center min-h-[88vh] max-md:text-center max-md:pt-12 max-md:min-h-0">
+      <div>
+        <div className="inline-flex items-center gap-2 text-sm text-text-secondary mb-6 py-2 px-4 bg-card border border-border rounded-full backdrop-blur-sm">
+          <span className="w-2 h-2 rounded-full bg-accent animate-[heroPulse_2s_ease-in-out_infinite]" />
+          <Typewriter text="Dasturchilar uchun" delay={200} speed={42} />
+        </div>
+        <h1 className="text-[clamp(2.5rem,5vw,3.75rem)] font-bold leading-tight mb-6 tracking-tight text-text-primary">
+          <Typewriter text="Intervyu" delay={400} speed={38} showCursor={false} />
+          <span className="bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] bg-clip-text text-transparent">
+            <Typewriter text=" savollari" delay={750} speed={32} showCursor={false} />
+          </span>
+          <br />
+          <Typewriter text="va professional javoblar" delay={1150} speed={28} />
+        </h1>
+        <p className="text-lg text-text-secondary max-w-[440px] mb-8 leading-relaxed max-md:mx-auto">
+          <Typewriter
+            text="JavaScript, React, CSS va Algoritmlar bo'yicha 18+ savol. AI yordamida javoblaringizni tekshiring va bilimingizni oshiring."
+            delay={1950}
+            speed={14}
+          />
+        </p>
+        <div className="flex items-center gap-8 mb-8 py-6 max-md:justify-center">
+          <div className="flex flex-col gap-1">
+            <span className="text-[1.75rem] font-bold text-accent font-mono">20</span>
+            <span className="text-[0.8125rem] text-text-muted">Texnologiya</span>
+          </div>
+          <div className="w-px h-10 bg-border" />
+          <div className="flex flex-col gap-1">
+            <span className="text-[1.75rem] font-bold text-accent font-mono">10000+</span>
+            <span className="text-[0.8125rem] text-text-muted">Savol</span>
+          </div>
+          <div className="w-px h-10 bg-border" />
+          <div className="flex flex-col gap-1">
+            <span className="text-[1.75rem] font-bold text-accent font-mono">3</span>
+            <span className="text-[0.8125rem] text-text-muted">Daraja</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 py-4 px-8 bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] text-white font-semibold text-base border-none rounded-md cursor-pointer transition-all duration-150 hover:-translate-y-0.5 hover:shadow-glow"
+          onClick={() => onBoshlashClick?.()}
+        >
+          Boshlash
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+      <div className="flex justify-center max-md:order-first">
+        <div className="bg-tertiary border border-border rounded-lg overflow-hidden shadow-lg max-w-[400px] min-w-[320px] transition-shadow duration-200 hover:shadow-glow">
+          <div className="p-4 flex gap-2 bg-secondary border-b border-border">
+            <span className="w-3 h-3 rounded-full bg-red-500" />
+            <span className="w-3 h-3 rounded-full bg-yellow-500" />
+            <span className="w-3 h-3 rounded-full bg-[var(--accent-cyan)]" />
+          </div>
+          <pre className="p-8 font-mono text-sm leading-[1.7] text-text-secondary m-0 overflow-x-auto min-h-[11rem] block box-border">
+            <CodeTypewriter code={HERO_CODE} delay={800} />
           </pre>
         </div>
       </div>
-
-      <style>{`
-        .hero {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: var(--space-3xl) var(--space-xl);
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: var(--space-3xl);
-          align-items: center;
-          min-height: 88vh;
-        }
-
-        .hero__badge {
-          display: inline-flex;
-          align-items: center;
-          gap: var(--space-sm);
-          font-size: 0.875rem;
-          color: var(--text-secondary);
-          margin-bottom: var(--space-lg);
-          padding: var(--space-sm) var(--space-md);
-          background: var(--bg-card);
-          border: 1px solid var(--border-subtle);
-          border-radius: var(--radius-full);
-          backdrop-filter: blur(8px);
-        }
-
-        .hero__badge-dot {
-          width: 8px;
-          height: 8px;
-          background: var(--accent-cyan);
-          border-radius: 50%;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.1); }
-        }
-
-        .hero__title {
-          font-size: clamp(2.5rem, 5vw, 3.75rem);
-          font-weight: 700;
-          line-height: 1.1;
-          margin-bottom: var(--space-lg);
-          letter-spacing: -0.03em;
-          color: var(--text-primary);
-        }
-
-        .hero__title-accent {
-          background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .hero__desc {
-          font-size: 1.125rem;
-          color: var(--text-secondary);
-          max-width: 440px;
-          margin-bottom: var(--space-xl);
-          line-height: 1.7;
-        }
-
-        .hero__stats {
-          display: flex;
-          align-items: center;
-          gap: var(--space-xl);
-          margin-bottom: var(--space-xl);
-          padding: var(--space-lg) 0;
-        }
-
-        .hero__stat {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-xs);
-        }
-
-        .hero__stat-num {
-          font-size: 1.75rem;
-          font-weight: 700;
-          color: var(--accent-cyan);
-          font-family: var(--font-mono);
-        }
-
-        .hero__stat-label {
-          font-size: 0.8125rem;
-          color: var(--text-muted);
-        }
-
-        .hero__stat-divider {
-          width: 1px;
-          height: 40px;
-          background: var(--border-subtle);
-        }
-
-        .hero__cta {
-          display: inline-flex;
-          align-items: center;
-          gap: var(--space-sm);
-          padding: var(--space-md) var(--space-xl);
-          background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-          color: white;
-          text-decoration: none;
-          font-weight: 600;
-          font-size: 1rem;
-          border-radius: var(--radius-md);
-          transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
-        }
-
-        .hero__cta:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-glow);
-        }
-
-        .hero__visual {
-          display: flex;
-          justify-content: center;
-        }
-
-        .hero__code-block {
-          background: var(--bg-tertiary);
-          border: 1px solid var(--border-subtle);
-          border-radius: var(--radius-lg);
-          overflow: hidden;
-          box-shadow: var(--shadow-lg);
-          max-width: 400px;
-          transition: box-shadow var(--duration-normal) var(--ease-out);
-        }
-
-        .hero__code-block:hover {
-          box-shadow: var(--shadow-glow);
-        }
-
-        .hero__code-header {
-          padding: var(--space-md);
-          display: flex;
-          gap: 8px;
-          background: var(--bg-secondary);
-          border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .hero__code-header span {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-        }
-        .hero__code-header span:nth-child(1) { background: #ef4444; }
-        .hero__code-header span:nth-child(2) { background: #eab308; }
-        .hero__code-header span:nth-child(3) { background: var(--accent-cyan); }
-
-        .hero__code {
-          padding: var(--space-xl);
-          font-family: var(--font-mono);
-          font-size: 0.875rem;
-          line-height: 1.7;
-          color: var(--text-secondary);
-          margin: 0;
-          overflow-x: auto;
-        }
-
-        @media (max-width: 900px) {
-          .hero {
-            grid-template-columns: 1fr;
-            text-align: center;
-            padding-top: var(--space-2xl);
-            min-height: auto;
-          }
-
-          .hero__desc { margin-left: auto; margin-right: auto; }
-          .hero__stats { justify-content: center; }
-          .hero__visual { order: -1; }
-        }
-      `}</style>
     </section>
   );
 }
