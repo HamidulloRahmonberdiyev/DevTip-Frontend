@@ -1,12 +1,14 @@
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/Profile.css';
 
 export default function Profile() {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
 
   if (!user) return null;
 
-  const displayName = user.displayName || 'Foydalanuvchi';
+  const displayName = user.displayName || t('profile_user');
   const email = user.email || '';
   const photoURL = user.photoURL || '';
 
@@ -31,12 +33,12 @@ export default function Profile() {
         <div className="profile__stats">
           <div className="profile__stat">
             <span className="profile__stat-num">0</span>
-            <span className="profile__stat-label">Javoblar</span>
+            <span className="profile__stat-label">{t('profile_answers')}</span>
           </div>
           <div className="profile__stat-divider" />
           <div className="profile__stat">
             <span className="profile__stat-num">0</span>
-            <span className="profile__stat-label">Texnologiyalar</span>
+            <span className="profile__stat-label">{t('profile_technologies')}</span>
           </div>
         </div>
 
@@ -46,7 +48,7 @@ export default function Profile() {
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          Chiqish
+          {t('profile_signOut')}
         </button>
       </div>
     </div>

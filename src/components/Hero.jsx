@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const HERO_CODE = `// DevTip - Interview Ready
-const skills = ['JS', 'React', 'CSS'];
+const skills = ['JS', 'Python', 'PHP'];
 const level = 'Professional';
 
 skills.forEach(skill => 
@@ -107,24 +108,25 @@ function CodeTypewriter({ code, delay = 0 }) {
 }
 
 export default function Hero({ onBoshlashClick }) {
+  const { t } = useLanguage();
   return (
     <section className="max-w-[1200px] mx-auto px-8 py-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-center min-h-[88vh] max-md:text-center max-md:pt-12 max-md:min-h-0">
       <div>
         <div className="inline-flex items-center gap-2 text-sm text-text-secondary mb-6 py-2 px-4 bg-card border border-border rounded-full backdrop-blur-sm">
           <span className="w-2 h-2 rounded-full bg-accent animate-[heroPulse_2s_ease-in-out_infinite]" />
-          <Typewriter text="Dasturchilar uchun" delay={200} speed={42} />
+          <Typewriter text={t('hero_badge')} delay={200} speed={42} />
         </div>
         <h1 className="text-[clamp(2.5rem,5vw,3.75rem)] font-bold leading-tight mb-6 tracking-tight text-text-primary">
-          <Typewriter text="Intervyu" delay={400} speed={38} showCursor={false} />
+          <Typewriter text={t('hero_title1')} delay={400} speed={38} showCursor={false} />
           <span className="bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] bg-clip-text text-transparent">
-            <Typewriter text=" savollari" delay={750} speed={32} showCursor={false} />
+            <Typewriter text={t('hero_title2')} delay={750} speed={32} showCursor={false} />
           </span>
           <br />
-          <Typewriter text="va professional javoblar" delay={1150} speed={28} />
+          <Typewriter text={t('hero_title3')} delay={1150} speed={28} />
         </h1>
         <p className="text-lg text-text-secondary max-w-[440px] mb-8 leading-relaxed max-md:mx-auto">
           <Typewriter
-            text="JavaScript, React, CSS va Algoritmlar bo'yicha 18+ savol. AI yordamida javoblaringizni tekshiring va bilimingizni oshiring."
+            text={t('hero_desc')}
             delay={1950}
             speed={14}
           />
@@ -132,17 +134,17 @@ export default function Hero({ onBoshlashClick }) {
         <div className="flex items-center gap-8 mb-8 py-6 max-md:justify-center">
           <div className="flex flex-col gap-1">
             <span className="text-[1.75rem] font-bold text-accent font-mono">20</span>
-            <span className="text-[0.8125rem] text-text-muted">Texnologiya</span>
+            <span className="text-[0.8125rem] text-text-muted">{t('hero_stat_tech')}</span>
           </div>
           <div className="w-px h-10 bg-border" />
           <div className="flex flex-col gap-1">
             <span className="text-[1.75rem] font-bold text-accent font-mono">10000+</span>
-            <span className="text-[0.8125rem] text-text-muted">Savol</span>
+            <span className="text-[0.8125rem] text-text-muted">{t('hero_stat_questions')}</span>
           </div>
           <div className="w-px h-10 bg-border" />
           <div className="flex flex-col gap-1">
-            <span className="text-[1.75rem] font-bold text-accent font-mono">3</span>
-            <span className="text-[0.8125rem] text-text-muted">Daraja</span>
+            <span className="text-[1.75rem] font-bold text-accent font-mono">50+</span>
+            <span className="text-[0.8125rem] text-text-muted">{t('hero_stat_users')}</span>
           </div>
         </div>
         <button
@@ -150,7 +152,7 @@ export default function Hero({ onBoshlashClick }) {
           className="inline-flex items-center gap-2 py-4 px-8 bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] text-white font-semibold text-base border-none rounded-md cursor-pointer transition-all duration-150 hover:-translate-y-0.5 hover:shadow-glow"
           onClick={() => onBoshlashClick?.()}
         >
-          Boshlash
+          {t('hero_cta')}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>

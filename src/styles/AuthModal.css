@@ -111,6 +111,23 @@
   transition: all var(--duration-fast) var(--ease-out);
 }
 
+.auth-modal__google-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.auth-modal__google-logo svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.auth-modal__google-text {
+  white-space: nowrap;
+}
+
 .auth-modal__google:hover:not(:disabled) {
   border-color: var(--border-accent);
   background: var(--bg-card-hover);

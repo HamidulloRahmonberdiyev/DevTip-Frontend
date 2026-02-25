@@ -1,6 +1,11 @@
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/TechnologyCard.css';
 
 export default function TechnologyCard({ technology, isActive, onSelect, onStart }) {
+  const { t } = useLanguage();
+  const descKey = `tech_${technology.id}_desc`;
+  const description = t(descKey) === descKey ? technology.description : t(descKey);
+
   return (
     <div
       className={`tech-card ${isActive ? 'tech-card--active' : ''}`}
@@ -17,8 +22,8 @@ export default function TechnologyCard({ technology, isActive, onSelect, onStart
         </div>
         <div className="tech-card__content">
           <h3 className="tech-card__name">{technology.name}</h3>
-          <p className="tech-card__desc">{technology.description}</p>
-          <span className="tech-card__count">{technology.count} savol</span>
+          <p className="tech-card__desc">{description}</p>
+          <span className="tech-card__count">{technology.count} {t('tech_questions')}</span>
         </div>
         <svg className="tech-card__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -28,7 +33,7 @@ export default function TechnologyCard({ technology, isActive, onSelect, onStart
         className="tech-card__start"
         onClick={() => onStart(technology.id)}
       >
-        Boshlash
+        {t('tech_start')}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>

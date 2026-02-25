@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
 const LANG_OPTIONS = [
-  { id: 'uz', label: 'Uzbek tili' },
-  { id: 'en', label: 'Ingliz tili' },
-  { id: 'ru', label: 'Rus tili' },
+  { id: 'uz', labelKey: 'header_lang_uz' },
+  { id: 'en', labelKey: 'header_lang_en' },
+  { id: 'ru', labelKey: 'header_lang_ru' },
 ];
 
 export default function Header({
@@ -15,13 +15,14 @@ export default function Header({
   onSignInClick,
   showProfileLink = false,
   isProfileActive = false,
+  onNavigate,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef(null);
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -33,7 +34,8 @@ export default function Header({
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const currentLangLabel = LANG_OPTIONS.find((o) => o.id === lang)?.label || 'Uzbek tili';
+  const langOpt = LANG_OPTIONS.find((o) => o.id === lang);
+  const currentLangLabel = langOpt ? t(langOpt.labelKey) : t('header_lang_uz');
 
   return (
     <header className="sticky top-0 z-[100] border-b border-border backdrop-blur-[20px] bg-[color-mix(in_srgb,var(--bg-primary)_85%,transparent)] transition-colors duration-200">
@@ -62,8 +64,25 @@ export default function Header({
             ${menuOpen ? 'max-md:translate-y-0 max-md:opacity-100 max-md:visible' : ''}
           `}
         >
-          <a href="#technologies" className="text-text-secondary no-underline text-[0.9375rem] font-medium transition-colors duration-150 hover:text-accent" onClick={closeMenu}>
-            Texnologiyalar
+          <a
+            href="#technologies"
+            className="text-text-secondary no-underline text-[0.9375rem] font-medium transition-colors duration-150 hover:text-accent"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onNavigate) {
+                onNavigate('technologies');
+              } else {
+                const el = document.getElementById('technologies');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  window.location.hash = '#technologies';
+                }
+              }
+              closeMenu();
+            }}
+          >
+            {t('header_technologies')}
           </a>
 
           <div className="relative" ref={langRef}>
@@ -96,7 +115,7 @@ export default function Header({
                     `}
                     onClick={() => { setLang(opt.id); setLangOpen(false); closeMenu(); }}
                   >
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </button>
                 ))}
               </div>
@@ -115,22 +134,22 @@ export default function Header({
                   {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                 </span>
               )}
-              <span className="text-sm font-medium text-text-primary">Profil</span>
+              <span className="text-sm font-medium text-text-primary">{t('header_profile')}</span>
             </button>
           ) : (
             <button
               className="py-2 px-4 rounded-md text-[0.9375rem] font-semibold cursor-pointer transition-all duration-150 border-none bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] text-white hover:shadow-[0_4px_20px_rgba(6,182,212,0.4)] hover:-translate-y-px max-md:w-full max-md:justify-center"
               onClick={() => { onSignInClick?.(); closeMenu(); }}
             >
-              Kirish
+              {t('header_signIn')}
             </button>
           )}
 
           <button
             className="w-10 h-10 flex items-center justify-center bg-tertiary border border rounded-md text-text-secondary cursor-pointer transition-all duration-150 hover:text-accent hover:border-border-accent"
             onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Yorug\' rejim' : 'Qorong\'u rejim'}
-            title={theme === 'dark' ? 'Yorug\' rejimga o\'tish' : 'Qorong\'u rejimga o\'tish'}
+            aria-label={theme === 'dark' ? t('header_aria_theme_light') : t('header_aria_theme_dark')}
+            title={theme === 'dark' ? t('header_aria_theme_light') : t('header_aria_theme_dark')}
           >
             {theme === 'dark' ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -148,7 +167,7 @@ export default function Header({
         <button
           className="hidden max-md:flex flex-col gap-1.5 bg-transparent border-none cursor-pointer p-2 md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Menyu"
+          aria-label={t('header_aria_menu')}
         >
           <span className={`block w-6 h-0.5 rounded-sm bg-text-primary transition-transform duration-200 ${menuOpen ? 'rotate-45 translate-x-1 translate-y-1' : ''}`} />
           <span className={`block w-6 h-0.5 rounded-sm bg-text-primary transition-transform duration-200 ${menuOpen ? 'opacity-0' : ''}`} />

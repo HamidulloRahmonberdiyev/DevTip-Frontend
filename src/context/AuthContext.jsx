@@ -24,7 +24,12 @@ export function AuthProvider({ children }) {
     if (!auth) return;
     setLoading(true);
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      const provider = new GoogleAuthProvider();
+      if (clientId) {
+        provider.setCustomParameters({ client_id: clientId });
+      }
+      await signInWithPopup(auth, provider);
     } catch (err) {
       console.error(err);
     } finally {

@@ -8,6 +8,7 @@ import AuthModal from './components/AuthModal';
 import StartModal from './components/StartModal';
 import { technologies, questions } from './data/questions';
 import { useAuth } from './context/AuthContext';
+import { useLanguage } from './context/LanguageContext';
 
 function App() {
   const [activeTech, setActiveTech] = useState('javascript');
@@ -16,6 +17,7 @@ function App() {
   const [authModal, setAuthModal] = useState(null);
   const [showStartModal, setShowStartModal] = useState(false);
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (user && authModal) setAuthModal(null);
@@ -27,15 +29,37 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleNavigate = (sectionId) => {
+    setPracticeMode(null);
+    setShowProfile(false);
+
+    const hash = sectionId ? `#${sectionId}` : '';
+    window.location.hash = hash;
+
+    const scrollToTarget = () => {
+      if (sectionId) {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    setTimeout(scrollToTarget, 0);
+  };
+
   if (showProfile && user) {
     return (
       <div className="min-h-screen">
         <Header
-          onLogoClick={() => setShowProfile(false)}
+          onLogoClick={() => handleNavigate('')}
           onProfileClick={() => setShowProfile(true)}
           onSignInClick={() => setAuthModal('signin')}
           showProfileLink
           isProfileActive
+          onNavigate={handleNavigate}
         />
         <main>
           <Profile />
@@ -62,10 +86,11 @@ function App() {
     return (
       <div className="min-h-screen">
         <Header
-          onLogoClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onLogoClick={() => handleNavigate('')}
           onProfileClick={() => setShowProfile(true)}
           onSignInClick={() => setAuthModal('signin')}
           showProfileLink={!!user}
+          onNavigate={handleNavigate}
         />
         <main>
           <PracticeSession
@@ -93,20 +118,21 @@ function App() {
   return (
     <div className="min-h-screen">
       <Header
-        onLogoClick={() => window.location.hash = ''}
+        onLogoClick={() => handleNavigate('')}
         onProfileClick={() => setShowProfile(true)}
         onSignInClick={() => setAuthModal('signin')}
         showProfileLink={!!user}
+        onNavigate={handleNavigate}
       />
       <main>
         <Hero onBoshlashClick={() => setShowStartModal(true)} />
 
         <section id="technologies" className="px-8 py-16 pt-12 max-w-[840px] mx-auto">
           <div className="text-center mb-12">
-            <span className="inline-block text-[0.8125rem] font-semibold text-accent mb-4 uppercase tracking-widest">Texnologiyalar</span>
-            <h2 className="text-4xl font-bold mb-4 tracking-tight text-text-primary">O‘rganishni boshlang</h2>
+            <span className="inline-block text-[0.8125rem] font-semibold text-accent mb-4 uppercase tracking-widest">{t('section_technologies')}</span>
+            <h2 className="text-4xl font-bold mb-4 tracking-tight text-text-primary">{t('section_learnTitle')}</h2>
             <p className="text-[1.0625rem] text-text-secondary leading-relaxed max-w-[520px] mx-auto">
-              Texnologiyani tanlang va «Boshlash» tugmasini bosing — savollarga javob yozishni boshlang
+              {t('section_learnDesc')}
             </p>
           </div>
           <div className="flex flex-col gap-6">
@@ -126,9 +152,9 @@ function App() {
           <div className="max-w-[840px] mx-auto text-center">
             <span className="block font-semibold text-lg mb-2 text-text-primary">◆ DevTip</span>
             <p className="text-[0.9375rem] text-text-muted mb-4">
-              Dasturchilar uchun intervyu tayyorgarligi. AI yordamida javoblaringizni tekshiring.
+              {t('footer_tagline')}
             </p>
-            <p className="text-[0.8125rem] text-text-muted opacity-70">© 2025 DevTip · Demo versiya</p>
+            <p className="text-[0.8125rem] text-text-muted opacity-70">{t('footer_copyright')}</p>
           </div>
         </footer>
       </main>
