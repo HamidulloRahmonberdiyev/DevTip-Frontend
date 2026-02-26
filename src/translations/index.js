@@ -82,6 +82,10 @@ const translations = {
     practice_aria_prev: 'Oldingi savol',
     practice_aria_next: 'Keyingi savol',
     practice_aria_question: 'Savol',
+    practice_no_questions: "Bu texnologiya uchun savollar topilmadi. Bosh sahifaga qayting.",
+    practice_rateQuestion: "Savolni yulduzcha bilan baholang",
+    practice_rate_star: 'yulduz',
+    practice_rated: 'Baholandi',
     practice_error_openai: "AI baholash uchun OpenAI API kaliti kerak. .env.local faylida VITE_OPENAI_API_KEY qo'shing.",
     practice_error_generic: "Xatolik yuz berdi. Qayta urinib ko'ring.",
 
@@ -164,6 +168,10 @@ const translations = {
     practice_aria_prev: 'Previous question',
     practice_aria_next: 'Next question',
     practice_aria_question: 'Question',
+    practice_no_questions: 'No questions found for this technology. Go back to home.',
+    practice_rateQuestion: 'Rate this question with stars',
+    practice_rate_star: 'star',
+    practice_rated: 'Rated',
     practice_error_openai: 'OpenAI API key required for AI evaluation. Add VITE_OPENAI_API_KEY in .env.',
     practice_error_generic: 'Something went wrong. Please try again.',
 
@@ -245,6 +253,10 @@ const translations = {
     practice_aria_prev: 'Предыдущий вопрос',
     practice_aria_next: 'Следующий вопрос',
     practice_aria_question: 'Вопрос',
+    practice_no_questions: 'Вопросы по этой технологии не найдены. Вернитесь на главную.',
+    practice_rateQuestion: 'Оцените вопрос звёздами',
+    practice_rate_star: 'звезда',
+    practice_rated: 'Оценено',
     practice_error_openai: 'Для оценки ИИ нужен ключ OpenAI API. Добавьте VITE_OPENAI_API_KEY в .env.',
     practice_error_generic: 'Произошла ошибка. Попробуйте ещё раз.',
 

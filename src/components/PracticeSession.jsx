@@ -9,25 +9,30 @@ const difficultyLabels = {
   senior: { labelKey: 'level_senior', color: '#ef4444' },
 };
 
-export default function PracticeSession({ questions, technologyName, onBack }) {
+const STARS_COUNT = 5;
+
+export default function PracticeSession({ questions = [], technologyName, onBack }) {
   const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [revealed, setRevealed] = useState({});
   const [aiFeedback, setAiFeedback] = useState({});
+  const [questionRatings, setQuestionRatings] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const editorRef = useRef(null);
 
-  const question = questions[currentIndex];
   const total = questions.length;
-  const progress = ((currentIndex + 1) / total) * 100;
+  const safeIndex = total > 0 ? Math.min(currentIndex, total - 1) : 0;
+  const question = questions[safeIndex] ?? null;
+  const progress = total > 0 ? ((safeIndex + 1) / total) * 100 : 0;
   const difficulty = question ? difficultyLabels[question.difficulty] : null;
+  const currentRating = question ? questionRatings[question.id] : null; // 1..5 yoki undefined
 
   useEffect(() => {
     editorRef.current?.focus();
     setError(null);
-  }, [currentIndex]);
+  }, [safeIndex]);
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -71,6 +76,13 @@ export default function PracticeSession({ questions, technologyName, onBack }) {
     setUserAnswers((prev) => ({ ...prev, [question.id]: value }));
   };
 
+  const handleRateQuestion = (stars) => {
+    setQuestionRatings((prev) => ({
+      ...prev,
+      [question.id]: prev[question.id] === stars ? undefined : stars,
+    }));
+  };
+
   const goNext = () => {
     if (currentIndex < total - 1) setCurrentIndex((i) => i + 1);
   };
@@ -79,10 +91,31 @@ export default function PracticeSession({ questions, technologyName, onBack }) {
     if (currentIndex > 0) setCurrentIndex((i) => i - 1);
   };
 
+  if (total === 0 || !question) {
+    return (
+      <div className="practice" role="main">
+        <div className="practice__top-bar">
+          <button type="button" className="practice__back" onClick={onBack} aria-label={t('practice_back')}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            {t('practice_back')}
+          </button>
+          <span className="practice__tech">{technologyName}</span>
+        </div>
+        <div className="practice__card practice__question-card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
+          <p className="practice__question" style={{ fontSize: '1rem', fontWeight: 400 }}>
+            {t('practice_no_questions')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="practice" role="main">
       <div className="practice__top-bar">
-        <button className="practice__back" onClick={onBack} aria-label={t('practice_back')}>
+        <button type="button" className="practice__back" onClick={onBack} aria-label={t('practice_back')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
@@ -91,7 +124,7 @@ export default function PracticeSession({ questions, technologyName, onBack }) {
         <div className="practice__meta">
           <span className="practice__tech">{technologyName}</span>
           <span className="practice__counter">
-            {currentIndex + 1} / {total}
+            {safeIndex + 1} / {total}
           </span>
         </div>
       </div>
@@ -100,7 +133,7 @@ export default function PracticeSession({ questions, technologyName, onBack }) {
         <div className="practice__progress-track">
           <div className="practice__progress-bar" style={{ width: `${progress}%` }} />
         </div>
-        <span className="practice__progress-text">{currentIndex + 1} / {total}</span>
+        <span className="practice__progress-text">{safeIndex + 1} / {total}</span>
       </div>
 
       <div className="practice__content">
@@ -112,6 +145,29 @@ export default function PracticeSession({ questions, technologyName, onBack }) {
             {difficulty ? t(difficulty.labelKey) : ''}
           </span>
           <h2 className="practice__question">{question.question}</h2>
+          <div className="practice__rate-wrap">
+            <span className="practice__rate-label">{t('practice_rateQuestion')}</span>
+            <div className="practice__rate-stars" role="group" aria-label={t('practice_rateQuestion')}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  className={`practice__rate-star ${currentRating >= star ? 'practice__rate-star--active' : ''}`}
+                  onClick={() => handleRateQuestion(star)}
+                  aria-pressed={currentRating >= star}
+                  aria-label={`${star} ${t('practice_rate_star')}`}
+                  title={`${star} ${t('practice_rate_star')}`}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                </button>
+              ))}
+            </div>
+            {currentRating != null && (
+              <span className="practice__rate-done">{currentRating} / {STARS_COUNT} — {t('practice_rated')}</span>
+            )}
+          </div>
         </div>
 
         <div className="practice__card practice__editor-card">
@@ -219,6 +275,7 @@ export default function PracticeSession({ questions, technologyName, onBack }) {
 
       <nav className="practice__nav">
         <button
+          type="button"
           className="practice__nav-btn"
           onClick={goPrev}
           disabled={currentIndex === 0}
@@ -233,13 +290,15 @@ export default function PracticeSession({ questions, technologyName, onBack }) {
           {questions.map((_, i) => (
             <button
               key={i}
-              className={`practice__nav-dot ${i === currentIndex ? 'practice__nav-dot--active' : ''}`}
+              type="button"
+              className={`practice__nav-dot ${i === safeIndex ? 'practice__nav-dot--active' : ''}`}
               onClick={() => setCurrentIndex(i)}
               aria-label={`${t('practice_aria_question')} ${i + 1}`}
             />
           ))}
         </div>
         <button
+          type="button"
           className="practice__nav-btn"
           onClick={goNext}
           disabled={currentIndex === total - 1}

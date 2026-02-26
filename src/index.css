@@ -95,6 +95,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Mobile header menu: force open state so menu always shows on tap */
+@media (max-width: 768px) {
+  header[data-menu-open="true"] > div > nav {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+}
+
 body {
   font-family: var(--font-sans);
   font-size: 16px;

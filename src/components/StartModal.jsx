@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { technologies } from '../data/questions';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/StartModal.css';
@@ -14,14 +15,20 @@ export default function StartModal({ onClose, onStart }) {
   const [level, setLevel] = useState('junior');
   const [techId, setTechId] = useState(technologies[0]?.id || 'javascript');
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onStart(techId, level);
     onClose();
   };
 
-  return (
-    <div className="start-modal-overlay" onClick={onClose}>
+  const modal = (
+    <div className="start-modal-overlay" onClick={onClose} role="presentation">
       <div
         className="start-modal"
         onClick={(e) => e.stopPropagation()}
@@ -94,4 +101,6 @@ export default function StartModal({ onClose, onStart }) {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

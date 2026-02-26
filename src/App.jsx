@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import TechnologyCard from './components/TechnologyCard';
@@ -23,11 +23,13 @@ function App() {
     if (user && authModal) setAuthModal(null);
   }, [user]);
 
-  const handleStartPractice = (techId) => {
-    setPracticeMode(techId);
+  const handleStartPractice = useCallback((techId) => {
+    const id = typeof techId === 'string' && questions[techId]?.length ? techId : 'javascript';
+    setPracticeMode(id);
     setShowProfile(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    setShowStartModal(false);
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  }, []);
 
   const handleNavigate = (sectionId) => {
     setPracticeMode(null);

@@ -38,7 +38,10 @@ export default function Header({
   const currentLangLabel = langOpt ? t(langOpt.labelKey) : t('header_lang_uz');
 
   return (
-    <header className="sticky top-0 z-[100] border-b border-border backdrop-blur-[20px] bg-[color-mix(in_srgb,var(--bg-primary)_85%,transparent)] transition-colors duration-200">
+    <header
+      className="sticky top-0 z-[100] border-b border-border backdrop-blur-[20px] bg-[color-mix(in_srgb,var(--bg-primary)_85%,transparent)] transition-colors duration-200"
+      data-menu-open={menuOpen ? 'true' : 'false'}
+    >
       <div className="max-w-[1200px] mx-auto px-4 py-4 md:px-8 flex items-center justify-between">
         <a
           href="#"
@@ -56,12 +59,17 @@ export default function Header({
         </a>
 
         <nav
+          aria-hidden={!menuOpen}
           className={`
             flex items-center gap-6
             max-md:fixed max-md:top-[57px] max-md:left-0 max-md:right-0 max-md:flex-col max-md:py-8 max-md:px-8
             max-md:bg-[color-mix(in_srgb,var(--bg-primary)_98%,transparent)] max-md:backdrop-blur-[20px] max-md:border-b max-md:border-border
-            max-md:transition-all max-md:duration-200 max-md:-translate-y-full max-md:opacity-0 max-md:invisible
-            ${menuOpen ? 'max-md:translate-y-0 max-md:opacity-100 max-md:visible' : ''}
+            max-md:transition-all max-md:duration-200 max-md:z-[110]
+            max-md:-translate-y-full max-md:opacity-0
+            ${menuOpen
+              ? 'max-md:!translate-y-0 max-md:!opacity-100 max-md:!visible max-md:!pointer-events-auto'
+              : 'max-md:invisible max-md:pointer-events-none'
+            }
           `}
         >
           <a
@@ -138,9 +146,14 @@ export default function Header({
             </button>
           ) : (
             <button
-              className="py-2 px-4 rounded-md text-[0.9375rem] font-semibold cursor-pointer transition-all duration-150 border-none bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] text-white hover:shadow-[0_4px_20px_rgba(6,182,212,0.4)] hover:-translate-y-px max-md:w-full max-md:justify-center"
+              className="inline-flex items-center gap-2 py-2 px-4 rounded-md text-[0.9375rem] font-semibold cursor-pointer transition-all duration-150 border-none bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] text-white hover:shadow-[0_4px_20px_rgba(6,182,212,0.4)] hover:-translate-y-px max-md:w-full max-md:justify-center"
               onClick={() => { onSignInClick?.(); closeMenu(); }}
             >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                <polyline points="10 17 15 12 10 7"/>
+                <line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
               {t('header_signIn')}
             </button>
           )}
@@ -165,9 +178,15 @@ export default function Header({
         </nav>
 
         <button
-          className="hidden max-md:flex flex-col gap-1.5 bg-transparent border-none cursor-pointer p-2 md:hidden"
-          onClick={() => setMenuOpen(!menuOpen)}
+          type="button"
+          className="hidden max-md:flex flex-col gap-1.5 items-center justify-center bg-transparent border-none cursor-pointer p-3 min-w-[44px] min-h-[44px] md:hidden relative z-[120] [touch-action:manipulation]"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen((prev) => !prev);
+          }}
           aria-label={t('header_aria_menu')}
+          aria-expanded={menuOpen}
         >
           <span className={`block w-6 h-0.5 rounded-sm bg-text-primary transition-transform duration-200 ${menuOpen ? 'rotate-45 translate-x-1 translate-y-1' : ''}`} />
           <span className={`block w-6 h-0.5 rounded-sm bg-text-primary transition-transform duration-200 ${menuOpen ? 'opacity-0' : ''}`} />
