@@ -19,12 +19,25 @@ export default function Header({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const langRef = useRef(null);
+  const menuBtnRef = useRef(null);
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { lang, setLang, t } = useLanguage();
 
-  const closeMenu = () => setMenuOpen(false);
+  const closeMenu = () => {
+    setMenuOpen(false);
+    menuBtnRef.current?.focus();
+  };
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const fn = () => setIsMobile(mq.matches);
+    fn();
+    mq.addEventListener('change', fn);
+    return () => mq.removeEventListener('change', fn);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -59,7 +72,7 @@ export default function Header({
         </a>
 
         <nav
-          aria-hidden={!menuOpen}
+          inert={isMobile && !menuOpen}
           className={`
             flex items-center gap-6
             max-md:fixed max-md:top-[57px] max-md:left-0 max-md:right-0 max-md:flex-col max-md:py-8 max-md:px-8
@@ -178,6 +191,7 @@ export default function Header({
         </nav>
 
         <button
+          ref={menuBtnRef}
           type="button"
           className="hidden max-md:flex flex-col gap-1.5 items-center justify-center bg-transparent border-none cursor-pointer p-3 min-w-[44px] min-h-[44px] md:hidden relative z-[120] [touch-action:manipulation]"
           onClick={(e) => {
