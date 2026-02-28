@@ -11,7 +11,7 @@ const difficultyLabels = {
 
 const STARS_COUNT = 5;
 
-export default function PracticeSession({ questions = [], technologyName, onBack }) {
+export default function PracticeSession({ questions = [], technologyName, sessionId, onBack, onLoadMore, onComplete }) {
   const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
@@ -19,6 +19,8 @@ export default function PracticeSession({ questions = [], technologyName, onBack
   const [aiFeedback, setAiFeedback] = useState({});
   const [questionRatings, setQuestionRatings] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [completing, setCompleting] = useState(false);
   const [error, setError] = useState(null);
   const editorRef = useRef(null);
 
@@ -83,12 +85,43 @@ export default function PracticeSession({ questions = [], technologyName, onBack
     }));
   };
 
-  const goNext = () => {
-    if (currentIndex < total - 1) setCurrentIndex((i) => i + 1);
+  const goNext = async () => {
+    if (currentIndex < total - 1) {
+      setCurrentIndex((i) => i + 1);
+      return;
+    }
+    if (currentIndex === total - 1 && onLoadMore && typeof onLoadMore === 'function') {
+      setLoadingMore(true);
+      try {
+        await onLoadMore();
+        setCurrentIndex((i) => i + 1);
+      } finally {
+        setLoadingMore(false);
+      }
+    }
   };
 
   const goPrev = () => {
     if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+  };
+
+  const buildResults = () => {
+    return questions.map((q) => ({
+      question_id: q.id,
+      answer: userAnswers[q.id] ?? '',
+      rating: questionRatings[q.id] ?? null,
+      ai_score: aiFeedback[q.id]?.score ?? null,
+    }));
+  };
+
+  const handleComplete = async () => {
+    if (typeof onComplete !== 'function') return;
+    setCompleting(true);
+    try {
+      await onComplete(buildResults());
+    } finally {
+      setCompleting(false);
+    }
   };
 
   if (total === 0 || !question) {
@@ -103,10 +136,17 @@ export default function PracticeSession({ questions = [], technologyName, onBack
           </button>
           <span className="practice__tech">{technologyName}</span>
         </div>
-        <div className="practice__card practice__question-card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-          <p className="practice__question" style={{ fontSize: '1rem', fontWeight: 400 }}>
-            {t('practice_no_questions')}
-          </p>
+        <div className="practice__empty">
+          <div className="practice__empty-icon" aria-hidden>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+          </div>
+          <h2 className="practice__empty-title">{t('practice_no_questions_title')}</h2>
+          <p className="practice__empty-desc">{t('practice_no_questions_desc')}</p>
+          <button type="button" className="practice__empty-btn" onClick={onBack}>
+            {t('practice_no_questions_btn')}
+          </button>
         </div>
       </div>
     );
@@ -127,6 +167,29 @@ export default function PracticeSession({ questions = [], technologyName, onBack
             {safeIndex + 1} / {total}
           </span>
         </div>
+        {onComplete && (
+          <button
+            type="button"
+            className="practice__complete-btn"
+            onClick={handleComplete}
+            disabled={completing}
+            aria-label={t('practice_complete')}
+          >
+            {completing ? (
+              <>
+                <span className="practice__spinner practice__spinner--sm" />
+                {t('practice_completing')}
+              </>
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                {t('practice_complete')}
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       <div className="practice__progress-wrap">
@@ -181,7 +244,7 @@ export default function PracticeSession({ questions = [], technologyName, onBack
             placeholder={t('practice_placeholder')}
             value={userAnswers[question.id] ?? ''}
             onChange={(e) => handleUserAnswer(e.target.value)}
-            rows={6}
+            rows={5}
             spellCheck="false"
           />
         </div>
@@ -301,13 +364,22 @@ export default function PracticeSession({ questions = [], technologyName, onBack
           type="button"
           className="practice__nav-btn"
           onClick={goNext}
-          disabled={currentIndex === total - 1}
+          disabled={currentIndex === total - 1 && !onLoadMore}
           aria-label={t('practice_aria_next')}
         >
-          {t('practice_next')}
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
+          {loadingMore ? (
+            <>
+              <span className="practice__spinner practice__spinner--sm" />
+              {t('practice_checking')}
+            </>
+          ) : (
+            <>
+              {t('practice_next')}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </>
+          )}
         </button>
       </nav>
     </div>

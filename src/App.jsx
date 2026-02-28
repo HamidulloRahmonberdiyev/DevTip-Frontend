@@ -6,33 +6,138 @@ import PracticeSession from './components/PracticeSession';
 import Profile from './components/Profile';
 import AuthModal from './components/AuthModal';
 import StartModal from './components/StartModal';
-import { technologies, questions } from './data/questions';
 import { useAuth } from './context/AuthContext';
 import { useLanguage } from './context/LanguageContext';
+import { fetchQuestions, mapApiQuestionsToPractice, completeSession } from './services/questionsApi';
+import { fetchTechnologies } from './services/technologiesApi';
 
 function App() {
-  const [activeTech, setActiveTech] = useState('javascript');
-  const [practiceMode, setPracticeMode] = useState(null);
+  const [technologies, setTechnologies] = useState([]);
+  const [technologiesLoading, setTechnologiesLoading] = useState(true);
+  const [technologiesError, setTechnologiesError] = useState(null);
+  const [activeTech, setActiveTech] = useState(null);
+  const [practiceSession, setPracticeSession] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [authModal, setAuthModal] = useState(null);
   const [showStartModal, setShowStartModal] = useState(false);
+  const [startModalTechId, setStartModalTechId] = useState(null);
+  const [pendingStartAfterLogin, setPendingStartAfterLogin] = useState(false);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [questionsError, setQuestionsError] = useState(null);
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   useEffect(() => {
-    if (user && authModal) setAuthModal(null);
+    let cancelled = false;
+    setTechnologiesLoading(true);
+    setTechnologiesError(null);
+    fetchTechnologies()
+      .then((list) => {
+        if (!cancelled) {
+          setTechnologies(list);
+          if (list.length > 0) setActiveTech(list[0].id);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setTechnologiesError(err.message || t('practice_error_generic'));
+      })
+      .finally(() => {
+        if (!cancelled) setTechnologiesLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [t]);
+
+  useEffect(() => {
+    if (user) {
+      setAuthModal(null);
+      if (pendingStartAfterLogin) {
+        setPendingStartAfterLogin(false);
+        setShowStartModal(true);
+      }
+    } else {
+      setPracticeSession(null);
+    }
+  }, [user, pendingStartAfterLogin]);
+
+  const handleStartPractice = useCallback(async (techId, level = 'junior', langId = null) => {
+    const id = techId ?? technologies[0]?.id;
+    if (id == null) return;
+    setShowProfile(false);
+    setQuestionsError(null);
+    setQuestionsLoading(true);
+
+    try {
+      const data = await fetchQuestions({
+        level,
+        lang: langId ?? lang,
+        technologyId: id,
+        limit: 10,
+        offset: 0,
+      });
+      const mapped = mapApiQuestionsToPractice(data.questions || [], level);
+      const tech = technologies.find((t) => t.id === id);
+      setPracticeSession({
+        techId: id,
+        technologyName: tech?.name || '',
+        questions: mapped,
+        sessionId: data.session_id ?? null,
+        level,
+        lang: langId ?? lang,
+      });
+      setShowStartModal(false);
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    } catch (err) {
+      setQuestionsError(err.message || t('practice_error_generic'));
+    } finally {
+      setQuestionsLoading(false);
+    }
+  }, [lang, t, technologies]);
+
+  const handleLoadMoreQuestions = useCallback(async () => {
+    if (!practiceSession?.questions?.length || !practiceSession.techId) return;
+    const { techId, technologyName, sessionId, level, lang: sessionLang } = practiceSession;
+    const offset = practiceSession.questions.length;
+    try {
+      const data = await fetchQuestions({
+        level: level || 'junior',
+        lang: sessionLang ?? lang,
+        technologyId: techId,
+        limit: 10,
+        offset,
+      });
+      const mapped = mapApiQuestionsToPractice(data.questions || [], level || 'junior');
+      if (mapped.length === 0) return;
+      setPracticeSession((prev) => ({
+        ...prev,
+        questions: [...prev.questions, ...mapped],
+        sessionId: data.session_id ?? prev.sessionId,
+      }));
+    } catch (_) {
+      // load more xatosi — keyingi safar yana urinish mumkin
+    }
+  }, [lang, practiceSession]);
+
+  const handleComplete = useCallback(async (results) => {
+    const sessionId = practiceSession?.sessionId;
+    try {
+      if (sessionId) await completeSession({ sessionId, results });
+    } catch (_) {}
+    setPracticeSession(null);
+  }, [practiceSession?.sessionId]);
+
+  const handleBoshlashClick = useCallback((techId = null) => {
+    if (!user) {
+      setStartModalTechId(techId);
+      setPendingStartAfterLogin(true);
+      setAuthModal('signin');
+      return;
+    }
+    setStartModalTechId(techId);
+    setShowStartModal(true);
   }, [user]);
 
-  const handleStartPractice = useCallback((techId) => {
-    const id = typeof techId === 'string' && questions[techId]?.length ? techId : 'javascript';
-    setPracticeMode(id);
-    setShowProfile(false);
-    setShowStartModal(false);
-    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-  }, []);
-
   const handleNavigate = (sectionId) => {
-    setPracticeMode(null);
+    setPracticeSession(null);
     setShowProfile(false);
 
     const hash = sectionId ? `#${sectionId}` : '';
@@ -67,24 +172,23 @@ function App() {
           <Profile />
         </main>
         {authModal && (
-          <AuthModal mode={authModal} onClose={() => setAuthModal(null)} />
+          <AuthModal mode={authModal} onClose={() => { setAuthModal(null); setPendingStartAfterLogin(false); }} />
         )}
         {showStartModal && (
           <StartModal
+            technologies={technologies}
+            initialTechId={startModalTechId}
             onClose={() => setShowStartModal(false)}
-            onStart={(techId) => {
-              handleStartPractice(techId);
-              setShowStartModal(false);
-            }}
+            onStart={(techId, level, langId) => handleStartPractice(techId, level, langId)}
+            loading={questionsLoading}
+            error={questionsError}
           />
         )}
       </div>
     );
   }
 
-  if (practiceMode) {
-    const tech = technologies.find((t) => t.id === practiceMode);
-    const techQuestions = questions[practiceMode] || [];
+  if (practiceSession) {
     return (
       <div className="min-h-screen">
         <Header
@@ -96,21 +200,25 @@ function App() {
         />
         <main>
           <PracticeSession
-            questions={techQuestions}
-            technologyName={tech?.name || ''}
-            onBack={() => setPracticeMode(null)}
+            questions={practiceSession.questions}
+            technologyName={practiceSession.technologyName}
+            sessionId={practiceSession.sessionId}
+            onBack={() => setPracticeSession(null)}
+            onLoadMore={handleLoadMoreQuestions}
+            onComplete={handleComplete}
           />
         </main>
         {authModal && (
-          <AuthModal mode={authModal} onClose={() => setAuthModal(null)} />
+          <AuthModal mode={authModal} onClose={() => { setAuthModal(null); setPendingStartAfterLogin(false); }} />
         )}
         {showStartModal && (
           <StartModal
+            technologies={technologies}
+            initialTechId={startModalTechId}
             onClose={() => setShowStartModal(false)}
-            onStart={(techId) => {
-              handleStartPractice(techId);
-              setShowStartModal(false);
-            }}
+            onStart={(techId, level, langId) => handleStartPractice(techId, level, langId)}
+            loading={questionsLoading}
+            error={questionsError}
           />
         )}
       </div>
@@ -127,7 +235,7 @@ function App() {
         onNavigate={handleNavigate}
       />
       <main>
-        <Hero onBoshlashClick={() => setShowStartModal(true)} />
+        <Hero onBoshlashClick={() => handleBoshlashClick(null)} />
 
         <section id="technologies" className="px-8 py-16 pt-12 max-w-[840px] mx-auto">
           <div className="text-center mb-12">
@@ -137,17 +245,23 @@ function App() {
               {t('section_learnDesc')}
             </p>
           </div>
-          <div className="flex flex-col gap-6">
-            {technologies.map((tech) => (
-              <TechnologyCard
-                key={tech.id}
-                technology={tech}
-                isActive={activeTech === tech.id}
-                onSelect={setActiveTech}
-                onStart={handleStartPractice}
-              />
-            ))}
-          </div>
+          {technologiesLoading ? (
+            <div className="text-center py-12 text-text-secondary">{t('practice_checking')}</div>
+          ) : technologiesError ? (
+            <div className="text-center py-12 text-[var(--accent-red,#ef4444)]">{technologiesError}</div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {technologies.map((tech) => (
+                <TechnologyCard
+                  key={tech.id}
+                  technology={tech}
+                  isActive={activeTech === tech.id}
+                  onSelect={setActiveTech}
+                  onStart={(techId) => { setActiveTech(techId); handleBoshlashClick(techId); }}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         <footer className="py-12 px-8 border-t border-border mt-16">
@@ -161,15 +275,16 @@ function App() {
         </footer>
       </main>
       {authModal && (
-        <AuthModal mode={authModal} onClose={() => setAuthModal(null)} />
+        <AuthModal mode={authModal} onClose={() => { setAuthModal(null); setPendingStartAfterLogin(false); }} />
       )}
       {showStartModal && (
         <StartModal
+          technologies={technologies}
+          initialTechId={startModalTechId}
           onClose={() => setShowStartModal(false)}
-          onStart={(techId) => {
-            handleStartPractice(techId);
-            setShowStartModal(false);
-          }}
+          onStart={(techId, level, langId) => handleStartPractice(techId, level, langId)}
+          loading={questionsLoading}
+          error={questionsError}
         />
       )}
     </div>

@@ -58,6 +58,60 @@
   color: var(--accent-cyan);
 }
 
+/* Savollar topilmadi — empty state */
+.practice__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  min-height: 320px;
+}
+
+.practice__empty-icon {
+  color: var(--text-muted);
+  opacity: 0.6;
+  margin-bottom: var(--space-lg);
+}
+
+.practice__empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.practice__empty-desc {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 360px;
+  margin: 0 0 var(--space-xl) 0;
+}
+
+.practice__empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: var(--accent-cyan);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.practice__empty-btn:hover {
+  background: var(--accent-blue);
+}
+
 .practice__counter {
   font-family: var(--font-mono);
   font-size: 0.875rem;
@@ -284,6 +338,42 @@
 
 @keyframes practiceSpin {
   to { transform: rotate(360deg); }
+}
+
+.practice__spinner--sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.practice__complete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--accent-cyan);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--bg-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.practice__complete-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.practice__complete-btn:disabled {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+.practice__complete-btn:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
 }
 
 .practice__reveal-btn {
