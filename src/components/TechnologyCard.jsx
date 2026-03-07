@@ -1,4 +1,5 @@
 import { useLanguage } from '../context/LanguageContext';
+import { getTechLogoUrl } from '../data/techLogos';
 import '../styles/TechnologyCard.css';
 
 const TECH_COLORS = {
@@ -41,6 +42,7 @@ export default function TechnologyCard({ technology, isActive, onSelect, onStart
       ? technology.icon.toUpperCase()
       : displayName.charAt(0);
   const techColor = getTechColor(technology);
+  const logoUrl = getTechLogoUrl(technology);
 
   return (
     <div
@@ -51,11 +53,15 @@ export default function TechnologyCard({ technology, isActive, onSelect, onStart
         onClick={() => onSelect(technology.id)}
       >
         <div
-          className="tech-card__badge"
+          className={`tech-card__badge ${logoUrl ? 'tech-card__badge--logo' : ''}`}
           style={{ '--tech-color': techColor }}
           aria-hidden
         >
-          <span className="tech-card__badge-label">{badgeLabel}</span>
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="tech-card__logo" width={40} height={40} />
+          ) : (
+            <span className="tech-card__badge-label">{badgeLabel}</span>
+          )}
         </div>
         <div className="tech-card__content">
           <h3 className="tech-card__name">{displayName}</h3>

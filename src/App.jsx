@@ -11,12 +11,42 @@ import { useLanguage } from './context/LanguageContext';
 import { fetchQuestions, mapApiQuestionsToPractice, completeSession } from './services/questionsApi';
 import { fetchTechnologies } from './services/technologiesApi';
 
+const PRACTICE_STORAGE_KEY = 'devtip-practice-session';
+
+function savePracticeSession(session) {
+  try {
+    if (session?.questions?.length) {
+      sessionStorage.setItem(PRACTICE_STORAGE_KEY, JSON.stringify(session));
+    } else {
+      sessionStorage.removeItem(PRACTICE_STORAGE_KEY);
+    }
+  } catch (_) {}
+}
+
+function getPracticeSession() {
+  try {
+    const raw = sessionStorage.getItem(PRACTICE_STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return data?.questions?.length ? data : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearPracticeSession() {
+  try {
+    sessionStorage.removeItem(PRACTICE_STORAGE_KEY);
+  } catch (_) {}
+}
+
 function App() {
   const [technologies, setTechnologies] = useState([]);
   const [technologiesLoading, setTechnologiesLoading] = useState(true);
   const [technologiesError, setTechnologiesError] = useState(null);
   const [activeTech, setActiveTech] = useState(null);
-  const [practiceSession, setPracticeSession] = useState(null);
+  const [practiceSession, setPracticeSessionState] = useState(null);
+  const [practiceRestored, setPracticeRestored] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [authModal, setAuthModal] = useState(null);
   const [showStartModal, setShowStartModal] = useState(false);
@@ -26,6 +56,27 @@ function App() {
   const [questionsError, setQuestionsError] = useState(null);
   const { user } = useAuth();
   const { t, lang } = useLanguage();
+
+  const setPracticeSession = useCallback((value) => {
+    setPracticeSessionState(value);
+    if (value == null) {
+      clearPracticeSession();
+      setPracticeRestored(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (practiceSession?.questions?.length) savePracticeSession(practiceSession);
+  }, [practiceSession]);
+
+  useEffect(() => {
+    if (!technologies.length || !user || practiceSession !== null || practiceRestored) return;
+    const saved = getPracticeSession();
+    if (saved?.questions?.length) {
+      setPracticeSessionState(saved);
+      setPracticeRestored(true);
+    }
+  }, [technologies, user, practiceSession, practiceRestored]);
 
   useEffect(() => {
     let cancelled = false;

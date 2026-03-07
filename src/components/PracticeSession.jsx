@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { evaluateAnswer } from '../services/aiEvaluation';
 import { useLanguage } from '../context/LanguageContext';
+import { AI_PROVIDERS, getAIUrlWithPrompt } from '../data/aiProviders';
+import { evaluateAnswer } from '../services/aiEvaluation';
+import { rateQuestion } from '../services/questionsApi';
+import AILogo from './AILogo';
 import '../styles/PracticeSession.css';
 
 const difficultyLabels = {
@@ -18,11 +21,15 @@ export default function PracticeSession({ questions = [], technologyName, sessio
   const [revealed, setRevealed] = useState({});
   const [aiFeedback, setAiFeedback] = useState({});
   const [questionRatings, setQuestionRatings] = useState({});
-  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [askAIOpen, setAskAIOpen] = useState(false);
+  const [askAICopied, setAskAICopied] = useState(false);
   const editorRef = useRef(null);
+  const askAIDropdownRef = useRef(null);
 
   const total = questions.length;
   const safeIndex = total > 0 ? Math.min(currentIndex, total - 1) : 0;
@@ -34,7 +41,21 @@ export default function PracticeSession({ questions = [], technologyName, sessio
   useEffect(() => {
     editorRef.current?.focus();
     setError(null);
+    setShowComingSoon(false);
+    setAskAIOpen(false);
+    setAskAICopied(false);
   }, [safeIndex]);
+
+  useEffect(() => {
+    if (!askAIOpen) return;
+    const handleClickOutside = (e) => {
+      if (askAIDropdownRef.current && !askAIDropdownRef.current.contains(e.target)) {
+        setAskAIOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [askAIOpen]);
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -52,6 +73,7 @@ export default function PracticeSession({ questions = [], technologyName, sessio
 
   const handleSubmit = async () => {
     setError(null);
+    setShowComingSoon(true);
     setLoading(true);
     try {
       const result = await evaluateAnswer(
@@ -63,12 +85,10 @@ export default function PracticeSession({ questions = [], technologyName, sessio
         ...prev,
         [question.id]: { score: result.score, feedback: result.feedback },
       }));
+      setShowComingSoon(false);
     } catch (err) {
-      if (err.message === 'OPENAI_API_KEY_NOT_SET') {
-        setError(t('practice_error_openai'));
-      } else {
-        setError(err.message || t('practice_error_generic'));
-      }
+      setError(null);
+      setShowComingSoon(true);
     } finally {
       setLoading(false);
     }
@@ -79,10 +99,47 @@ export default function PracticeSession({ questions = [], technologyName, sessio
   };
 
   const handleRateQuestion = (stars) => {
+    const next = question.id && (questionRatings[question.id] === stars ? undefined : stars);
     setQuestionRatings((prev) => ({
       ...prev,
-      [question.id]: prev[question.id] === stars ? undefined : stars,
+      [question.id]: next,
     }));
+    if (question?.id && next != null) {
+      rateQuestion(question.id, next).catch(() => {});
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    if (!text) return false;
+    if (navigator.clipboard?.writeText) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      return Promise.resolve(true);
+    } catch {
+      return Promise.resolve(false);
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
+
+  const handleAskAI = async (provider) => {
+    const text = question?.question ?? '';
+    const urlWithPrompt = getAIUrlWithPrompt(provider, text);
+    window.open(urlWithPrompt, '_blank', 'noopener,noreferrer');
+    setAskAIOpen(false);
+    const copied = await copyToClipboard(text);
+    if (copied) {
+      setAskAICopied(true);
+      setTimeout(() => setAskAICopied(false), 5000);
+    }
   };
 
   const goNext = async () => {
@@ -208,6 +265,40 @@ export default function PracticeSession({ questions = [], technologyName, sessio
             {difficulty ? t(difficulty.labelKey) : ''}
           </span>
           <h2 className="practice__question">{question.question}</h2>
+          <div className="practice__ask-ai-wrap" ref={askAIDropdownRef}>
+            <button
+              type="button"
+              className="practice__ask-ai-btn"
+              onClick={() => setAskAIOpen((v) => !v)}
+              aria-expanded={askAIOpen}
+              aria-haspopup="true"
+              aria-label={t('practice_askAI')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              {t('practice_askAI')}
+              <svg className="practice__ask-ai-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+            {askAIOpen && (
+              <div className="practice__ask-ai-dropdown" role="menu">
+                {AI_PROVIDERS.map((provider) => (
+                  <button
+                    key={provider.id}
+                    type="button"
+                    role="menuitem"
+                    className="practice__ask-ai-item"
+                    onClick={() => handleAskAI(provider)}
+                  >
+                    <AILogo id={provider.id} className="practice__ask-ai-logo" size={24} />
+                    <span>{t(provider.nameKey)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="practice__rate-wrap">
             <span className="practice__rate-label">{t('practice_rateQuestion')}</span>
             <div className="practice__rate-stars" role="group" aria-label={t('practice_rateQuestion')}>
@@ -300,6 +391,30 @@ export default function PracticeSession({ questions = [], technologyName, sessio
             )}
           </button>
         </div>
+
+        {showComingSoon && (
+          <div className="practice__coming-soon" role="status" aria-live="polite">
+            <div className="practice__coming-soon-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </div>
+            <div className="practice__coming-soon-content">
+              <strong className="practice__coming-soon-title">{t('practice_coming_soon')}</strong>
+              <p className="practice__coming-soon-desc">{t('practice_coming_soon_desc')}</p>
+            </div>
+          </div>
+        )}
+
+        {askAICopied && (
+          <div className="practice__ask-ai-toast practice__ask-ai-toast--success" role="status">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            <span>{t('practice_askAI_copied')}</span>
+          </div>
+        )}
 
         {error && (
           <div className="practice__error">

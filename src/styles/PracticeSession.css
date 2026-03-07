@@ -192,6 +192,129 @@
   color: var(--text-primary);
 }
 
+/* AI dan so'rash — tugma va dropdown */
+.practice__ask-ai-wrap {
+  position: relative;
+  margin-top: var(--space-lg);
+}
+
+.practice__ask-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.practice__ask-ai-btn:hover {
+  background: rgba(6, 182, 212, 0.18);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.practice__ask-ai-btn:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+.practice__ask-ai-btn[aria-expanded="true"] {
+  background: rgba(6, 182, 212, 0.18);
+  border-color: var(--accent-cyan);
+}
+
+.practice__ask-ai-chevron {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.practice__ask-ai-btn[aria-expanded="true"] .practice__ask-ai-chevron {
+  transform: rotate(180deg);
+}
+
+.practice__ask-ai-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 0;
+  min-width: 180px;
+  padding: var(--space-xs);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  animation: practiceDropdownIn 0.2s var(--ease-out);
+}
+
+@keyframes practiceDropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.practice__ask-ai-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.practice__ask-ai-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+}
+
+.practice__ask-ai-item:hover {
+  background: var(--accent-cyan-dim);
+  color: var(--accent-cyan);
+}
+
+.practice__ask-ai-item:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: -2px;
+}
+
+.practice__ask-ai-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--accent-cyan-dim);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: var(--radius-md);
+  color: var(--accent-cyan);
+  font-size: 0.9375rem;
+  margin-bottom: var(--space-xl);
+}
+
+.practice__ask-ai-toast svg {
+  flex-shrink: 0;
+}
+
+.practice__ask-ai-toast--success {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
 .practice__rate-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -407,6 +530,63 @@
 .practice__reveal-btn:focus-visible {
   outline: 2px solid var(--accent-cyan);
   outline-offset: 2px;
+}
+
+.practice__coming-soon {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  padding: var(--space-xl) var(--space-2xl);
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(14, 165, 233, 0.08));
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-xl);
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.15);
+  animation: practiceComingSoonIn 0.35s var(--ease-out);
+}
+
+@keyframes practiceComingSoonIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.practice__coming-soon-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 182, 212, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--accent-cyan);
+}
+
+.practice__coming-soon-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.practice__coming-soon-title {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  margin: 0 0 var(--space-xs) 0;
+  line-height: 1.3;
+}
+
+.practice__coming-soon-desc {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .practice__error {

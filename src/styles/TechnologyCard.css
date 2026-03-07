@@ -47,8 +47,22 @@
   background: color-mix(in srgb, var(--tech-bg) 35%, var(--bg-tertiary));
   border: none;
   border-radius: var(--radius-lg);
-  transition: background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  transition: background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
   box-shadow: 0 1px 4px color-mix(in srgb, var(--tech-bg) 40%, transparent);
+}
+
+/* Logo bilan badge — kattaroq, yorqin fon, logo o‘ziga xos ko‘rinsin */
+.tech-card__badge--logo {
+  width: 64px;
+  height: 64px;
+  background: var(--bg-primary, #fff);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .tech-card__badge--logo,
+.dark .tech-card__badge--logo {
+  background: var(--bg-secondary, #1e293b);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .tech-card:hover .tech-card__badge {
@@ -56,9 +70,32 @@
   box-shadow: 0 2px 8px color-mix(in srgb, var(--tech-bg) 45%, transparent);
 }
 
+.tech-card:hover .tech-card__badge--logo {
+  background: var(--bg-primary, #fff);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transform: scale(1.03);
+}
+
+[data-theme="dark"] .tech-card:hover .tech-card__badge--logo,
+.dark .tech-card:hover .tech-card__badge--logo {
+  background: var(--bg-secondary, #1e293b);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
 .tech-card--active .tech-card__badge {
   background: color-mix(in srgb, var(--tech-bg) 40%, var(--bg-tertiary));
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--tech-bg) 60%, transparent);
+}
+
+.tech-card--active .tech-card__badge--logo {
+  background: var(--bg-primary, #fff);
+  box-shadow: 0 0 0 2px var(--accent-cyan), 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .tech-card--active .tech-card__badge--logo,
+.dark .tech-card--active .tech-card__badge--logo {
+  background: var(--bg-secondary, #1e293b);
+  box-shadow: 0 0 0 2px var(--accent-cyan), 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
 .tech-card__badge-label {
@@ -68,6 +105,18 @@
   line-height: 1;
   user-select: none;
   letter-spacing: -0.02em;
+}
+
+.tech-card__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  display: block;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.tech-card:hover .tech-card__logo {
+  transform: scale(1.08);
 }
 
 .tech-card__content {

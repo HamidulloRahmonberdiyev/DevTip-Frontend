@@ -36,6 +36,26 @@ export async function fetchQuestions({ level, lang, technologyId, limit = 10, of
 }
 
 /**
+ * POST /questions/:id/rate — savolni yulduzcha bilan baholash.
+ * body: { stars: 1..5 }
+ */
+export async function rateQuestion(questionId, stars) {
+  const id = Number(questionId);
+  if (!Number.isFinite(id) || id < 1) return;
+  const starsVal = Math.min(5, Math.max(1, Number(stars) || 0));
+  const res = await authFetch(`/questions/${id}/rate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stars: starsVal }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Rate API xatosi: ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
  * POST /complete — sessiya natijalarini yuborish.
  * Backend boshqa fieldlar kutishi mumkin (session_id, results).
  */
