@@ -1,7 +1,7 @@
 import { authFetch } from '../context/AuthContext';
 
 const LEVEL_TO_ID = { junior: 1, middle: 2, senior: 3 };
-const LANG_TO_ID = { uz: 3, en: 1, ru: 2 };
+const LANG_TO_ID = { uz: 1, en: 3, ru: 2 };
 
 /**
  * GET /api/questions
