@@ -4,9 +4,8 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'dark';
-    return localStorage.getItem('devtip-theme') || 
-      (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    if (typeof window === 'undefined') return 'light';
+    return localStorage.getItem('devtip-theme') || 'light';
   });
 
   useEffect(() => {

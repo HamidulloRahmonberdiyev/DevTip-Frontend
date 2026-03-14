@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useLanguage } from '../context/LanguageContext';
 import { AI_PROVIDERS, getAIUrlWithPrompt } from '../data/aiProviders';
 import { evaluateAnswer } from '../services/aiEvaluation';
+import { getGeminiAnswer } from '../services/geminiAnswer';
 import { rateQuestion } from '../services/questionsApi';
 import AILogo from './AILogo';
 import '../styles/PracticeSession.css';
@@ -13,6 +15,36 @@ const difficultyLabels = {
 };
 
 const STARS_COUNT = 5;
+
+const GEMINI_CACHE_KEY = 'devtip_gemini_cache';
+const GEMINI_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 kun
+
+function getGeminiCache() {
+  try {
+    const raw = localStorage.getItem(GEMINI_CACHE_KEY);
+    if (!raw) return {};
+    const data = JSON.parse(raw);
+    const now = Date.now();
+    const out = {};
+    for (const [qId, entry] of Object.entries(data)) {
+      if (entry?.savedAt && entry.savedAt + GEMINI_CACHE_TTL_MS > now && entry.answer) {
+        out[qId] = entry.answer;
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function setGeminiCacheEntry(qId, answer) {
+  try {
+    const raw = localStorage.getItem(GEMINI_CACHE_KEY);
+    const prev = raw ? JSON.parse(raw) : {};
+    prev[qId] = { answer, savedAt: Date.now() };
+    localStorage.setItem(GEMINI_CACHE_KEY, JSON.stringify(prev));
+  } catch {}
+}
 
 export default function PracticeSession({ questions = [], technologyName, sessionId, onBack, onLoadMore, onComplete }) {
   const { t } = useLanguage();
@@ -28,6 +60,9 @@ export default function PracticeSession({ questions = [], technologyName, sessio
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [askAIOpen, setAskAIOpen] = useState(false);
   const [askAICopied, setAskAICopied] = useState(false);
+  const [geminiAnswers, setGeminiAnswers] = useState({});
+  const [geminiLoading, setGeminiLoading] = useState(null);
+  const [geminiError, setGeminiError] = useState({});
   const editorRef = useRef(null);
   const askAIDropdownRef = useRef(null);
 
@@ -67,8 +102,50 @@ export default function PracticeSession({ questions = [], technologyName, sessio
     return () => window.removeEventListener('keydown', handleKey);
   }, [currentIndex, total]);
 
-  const handleReveal = () => {
-    setRevealed((prev) => ({ ...prev, [question.id]: true }));
+  useEffect(() => {
+    if (questions.length === 0) return;
+    const cache = getGeminiCache();
+    const answers = {};
+    const revealedFromCache = {};
+    questions.forEach((q) => {
+      if (q.id && cache[q.id]) {
+        answers[q.id] = cache[q.id];
+        revealedFromCache[q.id] = true;
+      }
+    });
+    if (Object.keys(answers).length > 0) {
+      setGeminiAnswers((prev) => ({ ...prev, ...answers }));
+      setRevealed((prev) => ({ ...prev, ...revealedFromCache }));
+    }
+  }, [questions]);
+
+  const handleReveal = async () => {
+    const qId = question.id;
+    setRevealed((prev) => ({ ...prev, [qId]: true }));
+    if (geminiAnswers[qId] || geminiError[qId]) return;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      setGeminiError((prev) => ({ ...prev, [qId]: 'GEMINI_API_KEY_NOT_SET' }));
+      return;
+    }
+    setGeminiLoading(qId);
+    setGeminiError((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    try {
+      const answer = await getGeminiAnswer(question.question);
+      setGeminiAnswers((prev) => ({ ...prev, [qId]: answer }));
+      setGeminiCacheEntry(qId, answer);
+    } catch (err) {
+      setGeminiError((prev) => ({
+        ...prev,
+        [qId]: err.message || t('practice_geminiError'),
+      }));
+    } finally {
+      setGeminiLoading(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -371,9 +448,14 @@ export default function PracticeSession({ questions = [], technologyName, sessio
           <button
             className="practice__reveal-btn"
             onClick={handleReveal}
-            disabled={revealed[question.id]}
+            disabled={revealed[question.id] && !!geminiLoading}
           >
-            {revealed[question.id] ? (
+            {geminiLoading === question.id ? (
+              <>
+                <span className="practice__spinner practice__spinner--dark" />
+                {t('practice_geminiLoading')}
+              </>
+            ) : revealed[question.id] ? (
               <>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20 6L9 17l-5-5"/>
@@ -439,14 +521,67 @@ export default function PracticeSession({ questions = [], technologyName, sessio
         )}
 
         {revealed[question.id] && (
-          <div className="practice__answer-block">
-            <div className="practice__answer-header">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              {t('practice_correctAnswer')}
-            </div>
-            <p className="practice__answer-text">{question.answer}</p>
+          <div className="practice__answer-section">
+            {geminiLoading === question.id && (
+              <div className="practice__gemini-loading">
+                <div className="practice__gemini-loading-dots">
+                  <span /><span /><span />
+                </div>
+                <p className="practice__gemini-loading-text">{t('practice_geminiLoading')}</p>
+              </div>
+            )}
+            {!geminiLoading && geminiError[question.id] && (
+              <div className="practice__gemini-error">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 8v4M12 16h.01"/>
+                </svg>
+                <div>
+                  <strong className="practice__gemini-error-title">{t('practice_geminiError')}</strong>
+                  <p className="practice__gemini-error-msg">
+                    {geminiError[question.id] === 'GEMINI_API_KEY_NOT_SET'
+                      ? t('practice_geminiNoKey')
+                      : geminiError[question.id]}
+                  </p>
+                </div>
+              </div>
+            )}
+            {!geminiLoading && geminiAnswers[question.id] && (
+              <div className="practice__gemini-block">
+                <div className="practice__gemini-block-header">
+                  <AILogo id="gemini" className="practice__gemini-logo" size={28} />
+                  <div>
+                    <span className="practice__gemini-block-title">{t('practice_geminiAnswerTitle')}</span>
+                    <span className="practice__gemini-block-badge">{t('ai_gemini')}</span>
+                  </div>
+                </div>
+                <div className="practice__gemini-content practice__gemini-content--prose">
+                  <ReactMarkdown>{geminiAnswers[question.id]}</ReactMarkdown>
+                </div>
+              </div>
+            )}
+            {question.answer && geminiError[question.id] && (
+              <div className="practice__answer-block practice__answer-block--reference">
+                <div className="practice__answer-header">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  {t('practice_referenceAnswer')}
+                </div>
+                <p className="practice__answer-text">{question.answer}</p>
+              </div>
+            )}
+            {revealed[question.id] && !geminiLoading && !geminiAnswers[question.id] && !geminiError[question.id] && question.answer && (
+              <div className="practice__answer-block">
+                <div className="practice__answer-header">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  {t('practice_correctAnswer')}
+                </div>
+                <p className="practice__answer-text">{question.answer}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
